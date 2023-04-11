@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"golang.org/x/exp/slog"
 )
@@ -61,7 +62,6 @@ func (c *windowsController) call(ctx context.Context, args ...string) ([]byte, e
 	)
 
 	r, w, _ := os.Pipe()
-	defer w.Close()
 
 	attrs := &os.ProcAttr{
 		Files: []*os.File{nil, w, nil},
@@ -71,16 +71,19 @@ func (c *windowsController) call(ctx context.Context, args ...string) ([]byte, e
 	if err != nil {
 		return nil, err
 	}
+
 	state, err := proc.Wait()
 	if err != nil {
 		return nil, err
 	}
 
+	w.Close()
+
 	bb := &bytes.Buffer{}
 	io.Copy(bb, r)
 
 	if state.ExitCode() != 0 {
-		return nil, fmt.Errorf(bb.String())
+		return nil, fmt.Errorf(strings.TrimPrefix(strings.TrimSpace(bb.String()), "\b-\b \r"))
 	}
 	return bb.Bytes(), nil
 }

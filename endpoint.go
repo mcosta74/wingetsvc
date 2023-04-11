@@ -17,7 +17,11 @@ type searchRequest struct {
 
 type searchResponse struct {
 	V   []ServiceInfo `json:"v"`
-	Err string        `json:"err,omitempty"`
+	Err error         `json:"-"`
+}
+
+func (r searchResponse) Failed() error {
+	return r.Err
 }
 
 type versionsRequest struct {
@@ -26,7 +30,11 @@ type versionsRequest struct {
 
 type versionsResponse struct {
 	V   []string `json:"v"`
-	Err string   `json:"err,omitempty"`
+	Err error    `json:"-"`
+}
+
+func (r versionsResponse) Failed() error {
+	return r.Err
 }
 
 func MakeEndpoints(svc Service) Endpoints {
@@ -42,9 +50,9 @@ func makeSearchEndpoint(svc Service) endpoint.Endpoint {
 
 		v, err := svc.Search(ctx, req.Query)
 		if err != nil {
-			return searchResponse{v, err.Error()}, nil
+			return searchResponse{v, err}, nil
 		}
-		return searchResponse{v, ""}, nil
+		return searchResponse{v, nil}, nil
 	}
 }
 
@@ -54,8 +62,8 @@ func makeVersionsEndpoint(svc Service) endpoint.Endpoint {
 
 		v, err := svc.Versions(ctx, req.PackageID)
 		if err != nil {
-			return versionsResponse{v, err.Error()}, nil
+			return versionsResponse{v, err}, nil
 		}
-		return versionsResponse{v, ""}, nil
+		return versionsResponse{v, nil}, nil
 	}
 }
