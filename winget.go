@@ -31,7 +31,7 @@ func NewWingetController(logger *slog.Logger) WingetController {
 	} else {
 		controller = &noopController{}
 	}
-	return loggingControllerMiddleware(logger.With("os", runtime.GOOS), controller)
+	return loggingControllerMiddleware(logger, controller)
 }
 
 type noopController struct{}

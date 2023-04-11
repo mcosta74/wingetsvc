@@ -40,10 +40,11 @@ func parseSearchOutput(output []byte) ([]ServiceInfo, error) {
 			// ignore separator
 			continue
 		}
+		runes := []rune(line)
 		info := ServiceInfo{
-			Name:    strings.TrimSpace(line[:stops[0]]),
-			Id:      strings.TrimSpace(line[stops[0]:stops[1]]),
-			Version: strings.TrimSpace(line[stops[1]:stops[2]]),
+			Name:    strings.TrimSpace(string(runes[:stops[0]])),
+			Id:      strings.TrimSpace(string(runes[stops[0]:stops[1]])),
+			Version: strings.TrimSpace(string(runes[stops[1]:stops[2]])),
 		}
 		records = append(records, info)
 	}
