@@ -64,17 +64,17 @@ func (c *windowsController) call(ctx context.Context, args ...string) ([]byte, e
 	r, w, _ := os.Pipe()
 
 	attrs := &os.ProcAttr{
-		Files: []*os.File{nil, w, nil},
+		Files: []*os.File{nil, w, os.Stderr},
 	}
 
 	proc, err := os.StartProcess(wingetPath, append([]string{wingetPath}, args...), attrs)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("StartProcess() failed: %w", err)
 	}
 
 	state, err := proc.Wait()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Wait() failed: %w", err)
 	}
 
 	w.Close()

@@ -7,24 +7,33 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"golang.org/x/exp/slog"
 
 	"github.com/go-kit/kit/endpoint"
 	kithttp "github.com/go-kit/kit/transport/http"
 )
 
-func MakeHTTPHandler(endpoints Endpoints) http.Handler {
+type contextKey int
+
+var (
+	loggerContextKey contextKey = 0
+)
+
+func MakeHTTPHandler(endpoints Endpoints, logger *slog.Logger) http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.Recoverer)
 
-	// options := []kithttp.ServerOption{
-
-	// }
+	options := []kithttp.ServerOption{
+		kithttp.ServerErrorEncoder(encodeError),
+		kithttp.ServerBefore(loggerToContext(logger), kithttp.PopulateRequestContext),
+	}
 
 	searchHandler := kithttp.NewServer(
 		endpoints.Search,
 		decodeSearchRequest,
 		encodeResponse,
 		// kithttp.EncodeJSONResponse,
+		options...,
 	)
 
 	versionsHandler := kithttp.NewServer(
@@ -32,6 +41,7 @@ func MakeHTTPHandler(endpoints Endpoints) http.Handler {
 		decodeVersionsRequest,
 		encodeResponse,
 		// kithttp.EncodeJSONResponse,
+		options...,
 	)
 
 	r.Route("/api", func(r chi.Router) {
@@ -60,17 +70,38 @@ func decodeVersionsRequest(ctx context.Context, r *http.Request) (any, error) {
 
 func encodeResponse(ctx context.Context, rw http.ResponseWriter, respose any) error {
 	if failer, ok := respose.(endpoint.Failer); ok && failer.Failed() != nil {
-		return encodeError(ctx, rw, failer.Failed())
+		encodeError(ctx, failer.Failed(), rw)
+		return nil
 	}
 	return kithttp.EncodeJSONResponse(ctx, rw, respose)
 }
 
-func encodeError(ctx context.Context, rw http.ResponseWriter, err error) error {
+func encodeError(ctx context.Context, err error, rw http.ResponseWriter) {
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(http.StatusBadRequest)
+
+	logger := loggerFromContext(ctx)
+	if logger != nil {
+		logger.Error("error response", "err", err, "path", ctx.Value(kithttp.ContextKeyRequestPath))
+	}
 
 	tmp := map[string]string{
 		"description": err.Error(),
 	}
-	return json.NewEncoder(rw).Encode(tmp)
+	_ = json.NewEncoder(rw).Encode(tmp)
+}
+
+func loggerToContext(logger *slog.Logger) kithttp.RequestFunc {
+	return func(ctx context.Context, r *http.Request) context.Context {
+		return context.WithValue(ctx, loggerContextKey, logger)
+	}
+}
+
+func loggerFromContext(ctx context.Context) *slog.Logger {
+	val := ctx.Value(loggerContextKey)
+
+	if logger, ok := val.(*slog.Logger); ok {
+		return logger
+	}
+	return nil
 }

@@ -25,7 +25,7 @@ func main() {
 		controller  = wingetsvc.NewWingetController(logger)
 		service     = wingetsvc.NewService(controller)
 		endpoints   = wingetsvc.MakeEndpoints(service)
-		httpHandler = wingetsvc.MakeHTTPHandler(endpoints)
+		httpHandler = wingetsvc.MakeHTTPHandler(endpoints, logger.With("transport", "HTTP"))
 	)
 
 	var g run.Group
