@@ -11,12 +11,14 @@ import (
 type Config struct {
 	LogLevel  slog.Level `json:"log_level,omitempty"`
 	LogFormat string     `json:"log_format,omitempty"`
+	HTTPAddr  string     `json:"http_addr,omitempty"`
 }
 
 func LoadConfig(args []string) *Config {
 	config := &Config{
 		LogLevel:  slog.LevelInfo,
 		LogFormat: "text",
+		HTTPAddr:  ":8080",
 	}
 
 	loadEnv(config)
@@ -32,6 +34,10 @@ func loadEnv(config *Config) {
 	if val, ok := loadStringEnv("WGSVC_LOG_FORMAT"); ok {
 		config.LogFormat = val
 	}
+
+	if val, ok := loadStringEnv("WGSVC_HTTP_ADDR"); ok {
+		config.HTTPAddr = val
+	}
 }
 
 func loadStringEnv(name string) (string, bool) {
@@ -44,13 +50,14 @@ func loadFlags(config *Config, args []string) {
 	const (
 		logLevelName  = "log-level"
 		logFormatName = "log-format"
+		httpAddrName  = "http-addr"
 	)
 	fs.String(
 		logLevelName, config.LogLevel.String(),
 		fmt.Sprintf("Log level (%s, %s, %s, %s)", slog.LevelDebug.String(), slog.LevelInfo.String(), slog.LevelWarn.String(), slog.LevelError.String()),
 	)
 	fs.String(logFormatName, config.LogFormat, "Log format (text, json)")
-
+	fs.String(httpAddrName, config.HTTPAddr, "HTTP Listen address")
 	fs.Parse(args)
 
 	fs.Visit(func(f *flag.Flag) {
@@ -60,6 +67,9 @@ func loadFlags(config *Config, args []string) {
 
 		case logFormatName:
 			config.LogFormat = f.Value.String()
+
+		case httpAddrName:
+			config.HTTPAddr = f.Value.String()
 		}
 	})
 }

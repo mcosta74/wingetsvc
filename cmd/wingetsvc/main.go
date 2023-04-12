@@ -38,7 +38,7 @@ func main() {
 		// HTTP Handler
 		httpLogger := logger.With("transport", "HTTP")
 
-		listener, err := net.Listen("tcp", ":8080")
+		listener, err := net.Listen("tcp", config.HTTPAddr)
 		if err != nil {
 			httpLogger.Error("Failed to listen", "err", err)
 			os.Exit(1)

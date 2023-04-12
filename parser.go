@@ -3,7 +3,6 @@ package wingetsvc
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"regexp"
 	"strings"
 )
@@ -35,7 +34,6 @@ func parseSearchOutput(output []byte) ([]ServiceInfo, error) {
 	records := make([]ServiceInfo, 0)
 	for scanner.Scan() {
 		line := scanner.Text()
-		fmt.Println(line)
 		if separatorRe.MatchString(line) {
 			// ignore separator
 			continue
