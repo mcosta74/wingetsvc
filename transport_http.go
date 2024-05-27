@@ -46,8 +46,8 @@ func MakeHTTPHandler(endpoints Endpoints, logger *slog.Logger) http.Handler {
 	)
 
 	r.Route("/api", func(r chi.Router) {
-		r.Method(http.MethodPost, "/search", searchHandler)
-		r.Method(http.MethodPost, "/versions", versionsHandler)
+		r.Handle("POST /search", searchHandler)
+		r.Handle("POST /versions", versionsHandler)
 	})
 
 	return r
