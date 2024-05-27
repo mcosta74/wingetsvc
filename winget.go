@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"strings"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 type ServiceInfo struct {

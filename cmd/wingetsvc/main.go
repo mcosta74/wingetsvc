@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 
 	"github.com/mcosta74/wingetsvc"
 	"github.com/oklog/run"
@@ -67,15 +67,15 @@ func setupLogger(config *wingetsvc.Config) *slog.Logger {
 		return a
 	}
 
-	opts := slog.HandlerOptions{
+	opts := &slog.HandlerOptions{
 		AddSource:   true,
 		Level:       config.LogLevel,
 		ReplaceAttr: replace,
 	}
 
-	var handler slog.Handler = opts.NewJSONHandler(os.Stderr)
+	var handler slog.Handler = slog.NewJSONHandler(os.Stderr, opts)
 	if config.LogFormat == "text" {
-		handler = opts.NewTextHandler(os.Stderr)
+		handler = slog.NewTextHandler(os.Stderr, opts)
 	}
 
 	return slog.New(handler)
